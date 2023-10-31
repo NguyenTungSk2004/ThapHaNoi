@@ -5,6 +5,18 @@ screen = pygame.display.set_mode((1200,600))
 pygame.display.set_caption("Tháp Hà Nội")
 clock = pygame.time.Clock()
 
+# Tạo chữ
+font = pygame.font.SysFont("Arial", 32)
+textWin = font.render("You win", True, (255, 255, 255), (0, 0, 0))
+textReset = font.render("Reset", True, (255, 255, 255), (0, 0, 0))
+tang = font.render("Increase", True, (255, 255, 255), (0, 0, 0))
+giam = font.render("Decrease", True, (255, 255, 255), (0, 0, 0))
+tang_click = pygame.Rect(0,0, 120,50)
+giam_click = pygame.Rect(130 ,0, 120,50)
+win = pygame.Rect(460,100,250,100)
+reset = pygame.Rect(1100,0, 100,50)
+
+
 # các stack chứa nhãn của đĩa
 stack1 =[]
 stack2 =[]
@@ -51,12 +63,12 @@ def checkCollide(rect):
     if check(stack1, stack1_value) and rect.colliderect(collide1):
         if not stack1:
             return 1
-        elif stack1_value[stack1[len(stack1)-1]].width > rect.width or not stack1:
+        elif stack1_value[stack1[len(stack1)-1]].width > rect.width:
             return 1
     if check(stack2, stack2_value) and rect.colliderect(collide2):
         if not stack2:
             return 2
-        elif stack2_value[stack2[len(stack2)-1]].width > rect.width or not stack2:
+        elif stack2_value[stack2[len(stack2)-1]].width > rect.width:
             return 2
     if check(stack3, stack3_value) and rect.colliderect(collide3):
         if not stack3:
@@ -102,7 +114,6 @@ def checkInStack(rect,stack,stack_value,cot):
             test.y = cot[1] - (length-1)*30
             return 
 class DrawGame:
-
     def __init__(self, surface):
         self.surface = surface 
     
@@ -173,23 +184,75 @@ def process(event, players):
 
 draw = DrawGame(screen)
 running = True
-players = createPlayer(4) # Gọi hàm createPlayer và lưu kết quả vào biến players
+n = 2
+players = createPlayer(n) # Gọi hàm createPlayer và lưu kết quả vào biến players
+winGame = False
+reset_clicked = False
+crease = False
 while running:
     # Phần vẽ
     screen.fill((255, 255, 255))
+    pygame.draw.rect(screen, (0,0,0), reset)   
+    screen.blit(textReset, (reset.x+12,reset.y+5))    
+    pygame.draw.rect(screen, (0,0,0), tang_click)   
+    screen.blit(tang, (0,10))    
+    pygame.draw.rect(screen, (0,0,0), giam_click)   
+    screen.blit(giam, (giam_click.x,10))    
     draw.draw_columns()
     for i in players:
         draw.draw(i)
+
     # Phần xử lí sự kiện
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
-        else: 
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                if reset.collidepoint(event.pos):
+                   reset_clicked = True
+                elif tang_click.collidepoint(event.pos):
+                    n +=1
+                    crease = True
+                elif giam_click.collidepoint(event.pos):
+                    n -=1
+                    crease = True
+        if not reset_clicked and winGame == False: 
             process(event, players) # Gọi hàm process với biến players
-    if len(stack3) == 4:
-        print("ban da chien thang")
-        running = False
+
+    if crease:
+        # các stack chứa nhãn của đĩa
+        stack1 =[]
+        stack2 =[]
+        stack3 =[]
+        # giá trị của đĩa
+        stack1_value = {}
+        stack2_value = {}
+        stack3_value = {}
+        createPlayer(n)
+        crease = False
+
+    if reset_clicked:
+        n=2
+         # các stack chứa nhãn của đĩa
+        stack1 =[]
+        stack2 =[]
+        stack3 =[]
+        # giá trị của đĩa
+        stack1_value = {}
+        stack2_value = {}
+        stack3_value = {}
+        # Gọi hàm createPlayer và lưu kết quả vào biến players
+        players = createPlayer(n) 
+        reset_clicked = False
+        winGame = False
+
+    # Win Game
+    if len(stack3) == n:
+        pygame.draw.rect(screen, (0,0,0),win)
+        screen.blit(textWin, (win.x + 75, win.y + win.y/2 - 32))
+        winGame = True
+
     pygame.display.update()
-    clock.tick(40)
+    clock.tick(60)
 
 pygame.quit()
