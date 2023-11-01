@@ -188,7 +188,8 @@ n = 2
 players = createPlayer(n) # Gọi hàm createPlayer và lưu kết quả vào biến players
 winGame = False
 reset_clicked = False
-crease = False
+increase = False
+decrease = False
 while running:
     # Phần vẽ
     screen.fill((255, 255, 255))
@@ -210,17 +211,17 @@ while running:
             if event.button == 1:
                 if reset.collidepoint(event.pos):
                    reset_clicked = True
-                elif tang_click.collidepoint(event.pos):
-                    n +=1
-                    crease = True
-                elif giam_click.collidepoint(event.pos):
-                    n -=1
-                    crease = True
+                if tang_click.collidepoint(event.pos):
+                    increase = True
+                if giam_click.collidepoint(event.pos):
+                    decrease = True
         if not reset_clicked and winGame == False: 
             process(event, players) # Gọi hàm process với biến players
 
-    if crease:
-        # các stack chứa nhãn của đĩa
+    #Phần tăng số lượng đĩa
+    if increase and not stack3 and not stack2 and n < 10:
+        n +=1
+         # các stack chứa nhãn của đĩa
         stack1 =[]
         stack2 =[]
         stack3 =[]
@@ -228,8 +229,32 @@ while running:
         stack1_value = {}
         stack2_value = {}
         stack3_value = {}
-        createPlayer(n)
-        crease = False
+        # Gọi hàm createPlayer và lưu kết quả vào biến players
+        players = createPlayer(n) 
+        for i in players:
+            draw.draw(i)
+        reset_clicked = False
+        winGame = False
+        increase = False
+
+    #Phần giảm số lượng đĩa
+    if decrease and not stack3 and not stack2 and n > 2:
+        n -=1
+         # các stack chứa nhãn của đĩa
+        stack1 =[]
+        stack2 =[]
+        stack3 =[]
+        # giá trị của đĩa
+        stack1_value = {}
+        stack2_value = {}
+        stack3_value = {}
+        # Gọi hàm createPlayer và lưu kết quả vào biến players
+        players = createPlayer(n) 
+        for i in players:
+            draw.draw(i)
+        reset_clicked = False
+        winGame = False
+        decrease = False
 
     if reset_clicked:
         n=2
@@ -245,6 +270,7 @@ while running:
         players = createPlayer(n) 
         reset_clicked = False
         winGame = False
+        crease = False
 
     # Win Game
     if len(stack3) == n:

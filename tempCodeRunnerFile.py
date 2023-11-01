@@ -1,5 +1,2 @@
-     if reset.collidepoint(event.pos):
-                    # các stack chứa nhãn của đĩa
-                    stack1 =[]
-                    stack2 =[]
-                    stack3 =[]
+ # if reset.collidepoint(event.pos):
+                #    reset_clicked = True
