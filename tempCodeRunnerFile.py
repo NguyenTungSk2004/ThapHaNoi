@@ -1,2 +1,2 @@
- # if reset.collidepoint(event.pos):
-                #    reset_clicked = True
+        for i in DapAn:
+            move(i[0],i[1])

@@ -1,4 +1,6 @@
 import pygame
+import threading
+import time
 
 pygame.init()
 screen = pygame.display.set_mode((1200,600))
@@ -9,13 +11,14 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("Arial", 32)
 textWin = font.render("You win", True, (255, 255, 255), (0, 0, 0))
 textReset = font.render("Reset", True, (255, 255, 255), (0, 0, 0))
+textGiai = font.render("Solution", True, (255, 255, 255), (0, 0, 0))
 tang = font.render("Increase", True, (255, 255, 255), (0, 0, 0))
 giam = font.render("Decrease", True, (255, 255, 255), (0, 0, 0))
 tang_click = pygame.Rect(0,0, 120,50)
 giam_click = pygame.Rect(130 ,0, 120,50)
 win = pygame.Rect(460,100,250,100)
 reset = pygame.Rect(1100,0, 100,50)
-
+giai_button = pygame.Rect(970,0,120,50)
 
 # các stack chứa nhãn của đĩa
 stack1 =[]
@@ -31,6 +34,44 @@ stack3_value = {}
 collide1 = pygame.Rect(165,70,90,280)
 collide2 = pygame.Rect(540,70,90,280)
 collide3 = pygame.Rect(915,70,90,280)
+
+DapAn = []
+# Hàm để giải bài toán tháp Hà Nội
+def Giai(n, from_peg, to_peg, aux_peg):
+    if n == 1:
+        DapAn.append((from_peg, to_peg))
+        return
+    Giai(n-1, from_peg, aux_peg, to_peg)
+    DapAn.append((from_peg, to_peg))
+    Giai(n-1, aux_peg, to_peg, from_peg)
+
+def change(s):
+    if s == "stack1":
+        return stack1,stack1_value,collide1,(200,570)
+    if s == "stack2":
+        return stack2,stack2_value,collide2,(575,570)
+    if s == "stack3":
+        return stack3,stack3_value,collide3,(950,570)
+
+#Auto chuyển đĩa
+def move(s1,s2):
+    st1,st1_value,col1,cot1 = change(s1)
+    st2,st2_value,col2,cot2 = change(s2)
+
+    length = len(st1)
+    st1_value[st1[length-1]].x = col2.x
+    st1_value[st1[length-1]].y = col2.y
+    start = pygame.time.get_ticks()
+    while True:
+        pygame.draw.rect(screen,(0,0,128),st1_value[st1[length-1]])
+        print("dang ve")
+        pygame.display.flip()
+        pygame.display.update()
+        end = pygame.time.get_ticks()
+        if end - start >= 2000:
+            print("ket thuc")
+            break
+    checkInStack(st1_value[st1[length-1]],st2, st2_value,cot2)
 
 # Hàm check hình chữ nhật cao nhất trong stack
 def checkTopRect(rect):
@@ -136,7 +177,7 @@ class Player:
         self.dragging = False # Biến để kiểm tra xem có đang kéo hình chữ nhật hay không
         self.offset = (0, 0) # Biến để lưu khoảng cách giữa con trỏ chuột và góc trên bên trái của hình chữ nhật
 
-    def handle_events(self, event,x,y):
+    def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1: # Nếu nhấn chuột trái
                 rect = self.rect
@@ -180,21 +221,27 @@ def createPlayer(n):
 
 def process(event, players):
     for player in players: # Duyệt qua các đối tượng player trong danh sách players
-        player.handle_events(event,player.rect.x,player.rect.y) # Gọi phương thức handle_events cho mỗi đối tượng player
+        player.handle_events(event) # Gọi phương thức handle_events cho mỗi đối tượng player
 
 draw = DrawGame(screen)
 running = True
 n = 2
 players = createPlayer(n) # Gọi hàm createPlayer và lưu kết quả vào biến players
+Giai(n,"stack1","stack3","stack2")
+solution = False
 winGame = False
 reset_clicked = False
 increase = False
 decrease = False
+count = 0
 while running:
     # Phần vẽ
     screen.fill((255, 255, 255))
     pygame.draw.rect(screen, (0,0,0), reset)   
     screen.blit(textReset, (reset.x+12,reset.y+5))    
+    pygame.draw.rect(screen, (0,0,0), giai_button)   
+    screen.blit(textGiai, (giai_button.x+12,giai_button.y+5))  
+
     pygame.draw.rect(screen, (0,0,0), tang_click)   
     screen.blit(tang, (0,10))    
     pygame.draw.rect(screen, (0,0,0), giam_click)   
@@ -215,8 +262,15 @@ while running:
                     increase = True
                 if giam_click.collidepoint(event.pos):
                     decrease = True
+                if giai_button.collidepoint(event.pos):
+                    solution = True
         if not reset_clicked and winGame == False: 
             process(event, players) # Gọi hàm process với biến players
+
+    # Auto giải
+    if solution:
+        move(DapAn[count][0],DapAn[count][1])
+        solution = False
 
     #Phần tăng số lượng đĩa
     if increase and not stack3 and not stack2 and n < 10:
@@ -231,8 +285,8 @@ while running:
         stack3_value = {}
         # Gọi hàm createPlayer và lưu kết quả vào biến players
         players = createPlayer(n) 
-        for i in players:
-            draw.draw(i)
+        DapAn.clear()
+        Giai(n,"stack1","stack3","stack2")
         reset_clicked = False
         winGame = False
         increase = False
@@ -250,8 +304,8 @@ while running:
         stack3_value = {}
         # Gọi hàm createPlayer và lưu kết quả vào biến players
         players = createPlayer(n) 
-        for i in players:
-            draw.draw(i)
+        DapAn.clear()
+        Giai(n,"stack1","stack3","stack2")
         reset_clicked = False
         winGame = False
         decrease = False
@@ -268,16 +322,17 @@ while running:
         stack3_value = {}
         # Gọi hàm createPlayer và lưu kết quả vào biến players
         players = createPlayer(n) 
+        DapAn.clear()
+        Giai(n,"stack1","stack3","stack2")
         reset_clicked = False
         winGame = False
         crease = False
-
+    
     # Win Game
     if len(stack3) == n:
         pygame.draw.rect(screen, (0,0,0),win)
         screen.blit(textWin, (win.x + 75, win.y + win.y/2 - 32))
         winGame = True
-
     pygame.display.update()
     clock.tick(60)
 
