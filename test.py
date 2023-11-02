@@ -16,7 +16,7 @@ while running:
                 if rect.collidepoint(event.pos):
                     moving = True
                     mouse_x,mouse_y= event.pos
-                    offset = (rect.x - mouse_x, rect.y - mouse_y)
+                    offset = (rect.x - mouse_x, rect.y - mouse_y) 
                     print(offset)
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 1:

@@ -1,2 +1,1 @@
-        for i in DapAn:
-            move(i[0],i[1])
+self.original_pos = (rect.x, rect.y) # Lưu vị trí ban đầu của đĩa
