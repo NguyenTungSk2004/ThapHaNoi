@@ -1,1 +1,2 @@
-self.original_pos = (rect.x, rect.y) # Lưu vị trí ban đầu của đĩa
+        # veDia()
+        # pygame.display.flip()

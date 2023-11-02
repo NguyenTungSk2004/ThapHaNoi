@@ -1,32 +1,11 @@
-import pygame
+import threading
+count = 0 # Khởi tạo biến count bằng 0
+def update_count(): # Định nghĩa một hàm để cập nhật và in ra biến count
+    global count # Khai báo biến toàn cục count
+    count += 1 # Tăng biến count lên 1
+    print(count) # In ra màn hình giá trị của biến count
+    timer = threading.Timer(1, update_count) # Khởi tạo lại luồng Timer với khoảng thời gian là 1 giây và hàm là update_count
+    timer.start() # Bắt đầu luồng Timer
 
-pygame.init()
-screen = pygame.display.set_mode((1200,600))
-rect = pygame.Rect(100,100,100,100)
-running = True
-moving = False
-offset = (0,0)
-while running:
-    screen.fill((255,255,255))
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:
-                if rect.collidepoint(event.pos):
-                    moving = True
-                    mouse_x,mouse_y= event.pos
-                    offset = (rect.x - mouse_x, rect.y - mouse_y) 
-                    print(offset)
-        elif event.type == pygame.MOUSEBUTTONUP:
-            if event.button == 1:
-                moving = False
-        elif event.type == pygame.MOUSEMOTION:
-            if moving: 
-                mouse_x,mouse_y= event.pos
-                rect.x =  offset[0]+ mouse_x 
-                rect.y =  offset[1]+  mouse_y
-    pygame.draw.rect(screen,(0,0,0),rect)
-        
-    pygame.display.update()
-pygame.quit()
+timer = threading.Timer(1, update_count) # Khởi tạo luồng Timer đầu tiên với khoảng thời gian là 1 giây và hàm là update_count
+timer.start() # Bắt đầu luồng Timer

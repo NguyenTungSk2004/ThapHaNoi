@@ -25,6 +25,7 @@ class DrawGame:
         pygame.draw.rect(self.surface, color, rect)
 
 # Hàm để giải bài toán tháp Hà Nội
+DapAn = []
 def Giai(n, from_peg, to_peg, aux_peg):
     if n == 1:
         DapAn.append((from_peg, to_peg))
@@ -37,7 +38,7 @@ def Giai(n, from_peg, to_peg, aux_peg):
 def checkTopRect(rect):
     def check(stack, stack_value):
         for i in range(len(stack)): # Duyệt qua các hình chữ nhật trong stack
-            if stack_value[stack[i]].colliderect(rect): 
+            if stack_value[stack[i]].rect.colliderect(rect): 
                 if i == len(stack)-1:
                     return True
         return False
@@ -55,33 +56,35 @@ def checkTopRect(rect):
 
 # Hàm check va chạm
 def checkCollide(rect):
+    # Hàm check xem rect có nằm trong stack hay không
     def check(stack, stack_value):
         for i in stack:
-            if stack_value[i].colliderect(rect):
+            if stack_value[i].rect.colliderect(rect):
                 return False
         return True
 
-    if check(stack1, stack1_value) and rect.colliderect(collide1):
+    # nếu không nằm trong stack và va chạm với khung collide thì trả về cột va chạm
+    if check(stack1, stack1_value) and rect.colliderect(collide1): 
         if not stack1:
             return 1
-        elif stack1_value[stack1[len(stack1)-1]].width > rect.width:
+        elif stack1_value[stack1[len(stack1)-1]].rect.width > rect.width:
             return 1
     if check(stack2, stack2_value) and rect.colliderect(collide2):
         if not stack2:
             return 2
-        elif stack2_value[stack2[len(stack2)-1]].width > rect.width:
+        elif stack2_value[stack2[len(stack2)-1]].rect.width > rect.width:
             return 2
     if check(stack3, stack3_value) and rect.colliderect(collide3):
         if not stack3:
             return 3
-        elif stack3_value[stack3[len(stack3)-1]].width > rect.width:
+        elif stack3_value[stack3[len(stack3)-1]].rect.width > rect.width:
             return 3
     return -1
-
+# Hàm xử lí va chạm với stack --> di chuyển vào stack
 def checkInStack(rect,stack,stack_value,cot):
     def process_stack(stackps,stackps_value):
         for i in range(len(stackps)):
-            if stackps_value[stackps[i]].colliderect(rect): # Kiểm tra có đối tượng nào là rect hay không
+            if stackps_value[stackps[i]].rect.colliderect(rect): # Kiểm tra có đối tượng nào là rect hay không
                 # Thêm rect vào stack va chạm
                 stack.append(stackps[i]) 
                 stack_value[stackps[i]] = stackps_value[stackps[i]]
@@ -94,7 +97,7 @@ def checkInStack(rect,stack,stack_value,cot):
         # Kiểm tra xem rect có nằm trong stack1 không
         if process_stack(stack1,stack1_value):
             length = len(stack)
-            test = stack_value[stack[length-1]]
+            test = stack_value[stack[length-1]].rect
             test.x = cot[0] - test.width/2 +10
             test.y = cot[1] - (length-1)*30
             return 
@@ -102,7 +105,7 @@ def checkInStack(rect,stack,stack_value,cot):
         # Kiểm tra xem rect có nằm trong stack2 không
         if process_stack(stack2,stack2_value):
             length = len(stack)
-            test = stack_value[stack[length-1]]
+            test = stack_value[stack[length-1]].rect
             test.x = cot[0] - test.width/2 +10
             test.y = cot[1] - (length-1)*30
             return 
@@ -110,11 +113,11 @@ def checkInStack(rect,stack,stack_value,cot):
         # Kiểm tra xem rect có nằm trong stack3 không
         if process_stack(stack3,stack3_value):
             length = len(stack)
-            test = stack_value[stack[length-1]]
+            test = stack_value[stack[length-1]].rect
             test.x = cot[0] - test.width/2 +10
             test.y = cot[1] - (length-1)*30
             return 
-    
+# Khởi tạo đối tượng những cái đĩa 
 class Player:
     def __init__(self, rect):
         self.rect = rect
@@ -153,23 +156,34 @@ class Player:
                 mouse_x, mouse_y = event.pos # Lấy vị trí của con trỏ chuột
                 self.rect.x = mouse_x + self.offset[0] # Cập nhật vị trí x của hình chữ nhật bằng cách cộng offset với vị trí x của chuột
                 self.rect.y = mouse_y + self.offset[1] # Cập nhật vị trí y của hình chữ nhật bằng cách cộng offset với vị trí y của chuột
+    def update(self,stack,stack_value,cot):
+        if checkCollide(self.rect) == 1:
+            checkInStack(self.rect,stack1, stack1_value,(200,570))
+            self.original_pos = (self.rect.x, self.rect.y) # Lưu vị trí ban đầu của đĩa
+        elif checkCollide(self.rect) == 2:
+            checkInStack(self.rect,stack2, stack2_value,(575,570))
+            self.original_pos = (self.rect.x, self.rect.y) # Lưu vị trí ban đầu của đĩa
+        elif checkCollide(self.rect) == 3:
+            checkInStack(self.rect,stack3, stack3_value,(950,570))
+            self.original_pos = (self.rect.x, self.rect.y) # Lưu vị trí ban đầu của đĩa
+        elif checkCollide(self.rect) == -1:
+            self.rect.x = self.original_pos[0] # Di chuyển đĩa về vị trí ban đầu
+            self.rect.y = self.original_pos[1] # Di chuyển đĩa về vị trí ban đầu
 
+# Hàm tạo danh sách đối tượng ban đầu
 def createPlayer(n):
     r = 30
-    players = [] # Tạo một danh sách để lưu các đối tượng player
     for i in range(n):
         layer = pygame.Rect(180-i*r/2,570-(n-i-1)*r,60+i*r,r)
         stack1.insert(0, str(i))
-        stack1_value[stack1[len(stack1)-1-i]] = layer
-        players.insert(0, Player(layer)) # Tạo một đối tượng player cho mỗi hình chữ nhật và thêm vào danh sách players
-    return players # Trả về danh sách players
-
-def process(event, players):
-    for player in players: # Duyệt qua các đối tượng player trong danh sách players
-        player.handle_events(event) # Gọi phương thức handle_events cho mỗi đối tượng player
-
+        stack1_value[stack1[len(stack1)-1-i]] = Player(layer)
+# Hàm thực thi hành động của đối tượng
+def process(event, stack,stack_value):
+    for i in stack: # Duyệt qua các đối tượng player trong danh sách players
+        stack_value[i].handle_events(event) # Gọi phương thức handle_events cho mỗi đối tượng player
+# Hàm set giá trị ban đầu
 def Factory_Reset():
-        global stack1,stack2,stack3,stack1_value,stack2_value,stack3_value,reset_clicked,winGame,increase,decrease
+        global stack1,stack2,stack3,stack1_value,stack2_value,stack3_value,reset_clicked,winGame,increase,decrease,solution
          # các stack chứa nhãn của đĩa
         stack1 =[]
         stack2 =[]
@@ -183,6 +197,19 @@ def Factory_Reset():
         reset_clicked = False # Biến check đã ấn nút reset
         increase = False # Biến check đã ấn nút tăng
         decrease = False # Biến check đã ấn nút giảm
+        solution = False
+
+def veDia():
+    # vẽ đĩa
+    if len(stack1) != 0:
+        for i in stack1:
+            draw.draw((0,0,128),stack1_value[i])   
+    if len(stack2) !=0:
+        for i in stack2:
+            draw.draw((0,0,128),stack2_value[i])
+    if len(stack3) !=0:
+        for i in stack3:
+            draw.draw((0,0,128),stack3_value[i])
 
 draw = DrawGame(screen) # Tạo đối tượng vẽ game
 
@@ -194,9 +221,9 @@ textGiai = font.render("Solution", True, (255, 255, 255), (0, 0, 0))
 tang = font.render("Increase", True, (255, 255, 255), (0, 0, 0))
 giam = font.render("Decrease", True, (255, 255, 255), (0, 0, 0))
 # Đối tượng các nút
-tang_click = pygame.Rect(0,0, 120,50)
-giam_click = pygame.Rect(130 ,0, 120,50)
-reset = pygame.Rect(1100,0, 100,50)
+tang_button = pygame.Rect(0,0, 120,50)
+giam_button = pygame.Rect(130 ,0, 120,50)
+reset_button = pygame.Rect(1100,0, 100,50)
 giai_button = pygame.Rect(970,0,120,50)
 win = pygame.Rect(460,100,250,100) #Cửa sổ thông báo chiến thắng
 # khung va chạm các cột
@@ -205,43 +232,100 @@ collide2 = pygame.Rect(540,70,90,280)
 collide3 = pygame.Rect(915,70,90,280)
 n = 2
 Factory_Reset()
-players = createPlayer(n) # Gọi hàm createPlayer và lưu kết quả vào biến players
+createPlayer(n) # Gọi hàm createPlayer và lưu kết quả vào biến players
 
 running = True
+global an,start,end
+l = 0
+def update_count(): # Định nghĩa một hàm để cập nhật và in ra biến count
+    global l # Khai báo biến toàn cục count
+    l += 1 # Tăng biến count lên 1
+    timer = threading.Timer(1, update_count) # Khởi tạo lại luồng Timer với khoảng thời gian là 1 giây và hàm là update_count
+    timer.start() # Bắt đầu luồng Timer
 
 while running:
     # Phần vẽ
     screen.fill((255, 255, 255))
     draw.draw_columns()
     # Nút reset
-    draw.draw((0,0,0), reset)   
-    screen.blit(textReset, (reset.x+12,reset.y+5))    
+    draw.draw((0,0,0), reset_button)   
+    screen.blit(textReset, (reset_button.x+12,reset_button.y+5))    
     # Nút giải
     draw.draw((0,0,0), giai_button)   
     screen.blit(textGiai, (giai_button.x+12,giai_button.y+5))  
     # Nút increase
-    draw.draw((0,0,0), tang_click)   
+    draw.draw((0,0,0), tang_button)   
     screen.blit(tang, (0,10))    
     # nút decrease
-    draw.draw((0,0,0), giam_click)   
-    screen.blit(giam, (giam_click.x,10))    
-    # vẽ đĩa
-    for i in players:
-        draw.draw((0,0,128),i)
+    draw.draw((0,0,0), giam_button)   
+    screen.blit(giam, (giam_button.x,10))    
     # Phần xử lí sự kiện
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:
-                if reset.collidepoint(event.pos):
+                if reset_button.collidepoint(event.pos):
                    reset_clicked = True
-                if tang_click.collidepoint(event.pos):
+                if tang_button.collidepoint(event.pos):
                     increase = True
-                if giam_click.collidepoint(event.pos):
+                if giam_button.collidepoint(event.pos):
                     decrease = True
+                if giai_button.collidepoint(event.pos):
+                    DapAn.clear()
+                    Giai(n,collide1,collide3,collide2)
+                    an = DapAn[0]
+                    l = 0
+                    timer = threading.Timer(1, update_count) # Khởi tạo lại luồng Timer với khoảng thời gian là 1 giây và hàm là update_count
+                    timer.start() # Bắt đầu luồng Timer
+                    start = 0
+                    solution = True
         if not reset_clicked and winGame == False: 
-            process(event, players) # Gọi hàm process với biến players
+            process(event, stack1,stack1_value) # Gọi hàm process với biến stack1_value
+            process(event, stack2,stack2_value) # Gọi hàm process với biến stack2_value
+            process(event, stack3,stack3_value) # Gọi hàm process với biến stack3_value
+
+    #khi ấn vào nút solution
+    if solution:
+        if an[0]== collide1 and an[1] == collide2 and len(stack1) !=0:
+            index = stack1[len(stack1)-1]
+            stack1_value[index].rect.x = an[1].x 
+            stack1_value[index].rect.y = an[1].y 
+            stack1_value[index].update(stack2,stack2_value,(575,570))
+        if an[0]== collide2 and an[1] == collide1 and len(stack2) !=0:
+            index = stack2[len(stack2)-1]
+            stack2_value[index].rect.x = an[1].x 
+            stack2_value[index].rect.y = an[1].y 
+            stack2_value[index].update(stack1, stack1_value,(200,570))
+        elif an[0]== collide2 and an[1] == collide3 and len(stack2) !=0:
+            index = stack2[len(stack2)-1]
+            stack2_value[index].rect.x = an[1].x 
+            stack2_value[index].rect.y = an[1].y 
+            stack2_value[index].update(stack3, stack3_value,(950,570))
+        if an[0]== collide3 and an[1] == collide2 and len(stack3) !=0:
+            index = stack3[len(stack3)-1]
+            stack3_value[index].rect.x = an[1].x 
+            stack3_value[index].rect.y = an[1].y 
+            stack3_value[index].update(stack2,stack2_value,(575,570))
+        elif an[0]== collide1 and an[1] == collide3 and len(stack1) !=0:
+            index = stack1[len(stack1)-1]
+            stack1_value[index].rect.x = an[1].x 
+            stack1_value[index].rect.y = an[1].y 
+            stack1_value[index].update(stack3, stack3_value,(950,570))
+        if an[0]== collide3 and an[1] == collide1  and len(stack3) !=0:
+            index = stack3[len(stack3)-1]
+            stack3_value[index].rect.x = an[1].x 
+            stack3_value[index].rect.y = an[1].y 
+            stack3_value[index].update(stack1, stack1_value,(200,570))
+        end = l
+        if end == len(DapAn):
+            timer.cancel()
+            solution = False
+        elif (end - start) == 1:
+            start = end
+            an = DapAn[l]
+    veDia()
+    
     #Khi ấn vào nút tăng
     if increase and not stack3 and not stack2 and n < 10:
         n +=1
@@ -257,13 +341,12 @@ while running:
         n=2
         Factory_Reset()
         players = createPlayer(n) 
-    
     # Win Game
     if len(stack3) == n:
         pygame.draw.rect(screen, (0,0,0),win)
         screen.blit(textWin, (win.x + 75, win.y + win.y/2 - 32))
         winGame = True
-    pygame.display.update()
+    pygame.display.flip()
     clock.tick(60)
 
 pygame.quit()
